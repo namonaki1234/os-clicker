@@ -1,17 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   BadgeCheck,
-  Binary,
   BookOpenCheck,
   BrainCircuit,
   Cpu,
-  Database,
-  FileCode2,
   Flame,
   Globe2,
   HardDrive,
-  Layers3,
   Lock,
+  Menu,
   MemoryStick,
   MonitorCog,
   Network,
@@ -20,6 +17,7 @@ import {
   Sparkles,
   TerminalSquare,
   Trophy,
+  X,
 } from 'lucide-react'
 import './App.css'
 
@@ -595,15 +593,31 @@ const BUILD_STAGES = [
   },
 ]
 
+const STORAGE_KEY = 'os-browser-academy:v2'
+
+const readSavedProgress = () => {
+  if (typeof window === 'undefined') {
+    return {}
+  }
+
+  try {
+    return JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')
+  } catch {
+    return {}
+  }
+}
+
 function App() {
-  const [activeLessonId, setActiveLessonId] = useState(LESSONS[0].id)
-  const [completedLessons, setCompletedLessons] = useState({})
-  const [builtStages, setBuiltStages] = useState({})
+  const savedProgress = useMemo(readSavedProgress, [])
+  const [activeLessonId, setActiveLessonId] = useState(savedProgress.activeLessonId ?? LESSONS[0].id)
+  const [completedLessons, setCompletedLessons] = useState(savedProgress.completedLessons ?? {})
+  const [builtStages, setBuiltStages] = useState(savedProgress.builtStages ?? {})
   const [selectedOption, setSelectedOption] = useState(null)
   const [selectedBuildOptions, setSelectedBuildOptions] = useState({})
   const [feedback, setFeedback] = useState('まずは最初のノードを開いて、低レイヤー探検を始めよう。')
   const [buildFeedback, setBuildFeedback] = useState('レッスンをクリアすると、対応するOS/ブラウザ部品を組み立てられるようになります。')
-  const [streak, setStreak] = useState(0)
+  const [streak, setStreak] = useState(savedProgress.streak ?? 0)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const activeLesson = LESSONS.find((lesson) => lesson.id === activeLessonId) ?? LESSONS[0]
   const activeTrack = TRACKS.find((track) => track.id === activeLesson.trackId)
@@ -621,9 +635,22 @@ function App() {
   const buildReady = activeBuildStage.requires.every((lessonId) => completedLessons[lessonId])
   const buildProgress = Math.round((builtCount / BUILD_STAGES.length) * 100)
 
+  useEffect(() => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        activeLessonId,
+        completedLessons,
+        builtStages,
+        streak,
+      }),
+    )
+  }, [activeLessonId, builtStages, completedLessons, streak])
+
   const selectLesson = (lesson) => {
     setActiveLessonId(lesson.id)
     setSelectedOption(null)
+    setIsMenuOpen(false)
     setFeedback(completedLessons[lesson.id] ? '復習モード。もう一度解いて理解を固めよう。' : '短い概念を読んで、クイズで確認しよう。')
   }
 
@@ -663,15 +690,59 @@ function App() {
     setBuildFeedback(stage.result)
   }
 
+  const renderLessonMenu = (variant = 'rail') => (
+    <nav className={`lesson-menu ${variant}`} aria-label="問題メニュー">
+      {TRACKS.map((track) => {
+        const TrackIcon = track.icon
+        const trackDone = track.lessons.filter((lesson) => completedLessons[lesson.id]).length
+        return (
+          <section className="track-section" key={track.id}>
+            <div className="track-header">
+              <span className="track-icon" style={{ '--track-color': track.color }}>
+                <TrackIcon size={16} />
+              </span>
+              <div>
+                <h2>{track.title}</h2>
+                <p>
+                  {trackDone}/{track.lessons.length}
+                </p>
+              </div>
+            </div>
+
+            <div className="lesson-path">
+              {track.lessons.map((lesson) => {
+                const isCompleted = Boolean(completedLessons[lesson.id])
+                const isActive = lesson.id === activeLesson.id
+                return (
+                  <button
+                    className={`lesson-node ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}
+                    key={lesson.id}
+                    type="button"
+                    onClick={() => selectLesson({ ...lesson, trackId: track.id })}
+                    aria-pressed={isActive}
+                  >
+                    <span>{isCompleted ? <BadgeCheck size={16} /> : <Play size={14} />}</span>
+                    <strong>{lesson.title}</strong>
+                    <small>{lesson.xp}</small>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        )
+      })}
+    </nav>
+  )
+
   return (
     <main className="app-shell">
-      <section className="overview-panel" aria-labelledby="app-title">
-        <div className="overview-copy">
-          <p className="eyebrow">Low-level quest map</p>
+      <header className="app-header">
+        <button className="icon-button menu-toggle" type="button" onClick={() => setIsMenuOpen(true)} aria-label="問題メニューを開く">
+          <Menu size={19} />
+        </button>
+        <div className="brand-block">
+          <p className="eyebrow">Low-level academy</p>
           <h1 id="app-title">OS & Browser Academy</h1>
-          <p className="hero-copy">
-            OSの起動、メモリ、ファイル、ネットワーク、ブラウザレンダリング、セキュリティを短いレッスンで進める学習ゲーム。
-          </p>
         </div>
 
         <div className="score-board" aria-label="学習ステータス">
@@ -701,138 +772,29 @@ function App() {
           </div>
         </div>
 
-        <div className="progress-shell" aria-label={`全体進捗 ${progress}%`}>
+        <div className="progress-shell lesson-progress" aria-label={`全体進捗 ${progress}%`}>
           <span style={{ width: `${progress}%` }} />
         </div>
-      </section>
+      </header>
 
-      <section className="builder-panel" aria-labelledby="builder-title">
-        <div className="builder-copy">
-          <p className="eyebrow">Build mode</p>
-          <h2 id="builder-title">ミニOS/ブラウザを組み立てる</h2>
-          <p>
-            クイズで得た知識を材料にして、実装の順番を選びます。正しい部品を選ぶと、学習用アーキテクチャが少しずつ完成します。
-          </p>
-        </div>
-
-        <div className="build-meter" aria-label={`ビルド進捗 ${buildProgress}%`}>
-          <span style={{ width: `${buildProgress}%` }} />
-        </div>
-
-        <div className="build-board">
-          <div className="build-stage-card">
-            <div className="build-stage-topline">
-              <span>{activeBuildStage.area}</span>
-              <strong>{builtStages[activeBuildStage.id] ? 'Built' : buildReady ? 'Ready' : 'Locked'}</strong>
-            </div>
-            <h3>{activeBuildStage.title}</h3>
-            <p>{activeBuildStage.prompt}</p>
-            <div className="requirement-list">
-              {activeBuildStage.requires.map((lessonId) => {
-                const lesson = LESSONS.find((item) => item.id === lessonId)
-                const done = Boolean(completedLessons[lessonId])
-                return (
-                  <button
-                    className={done ? 'requirement-chip done' : 'requirement-chip'}
-                    key={lessonId}
-                    type="button"
-                    onClick={() => selectLesson(lesson)}
-                  >
-                    {done ? <BadgeCheck size={15} /> : <Lock size={15} />}
-                    {lesson.title}
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="build-options">
-              {activeBuildStage.options.map((option, index) => {
-                const selected = selectedBuildOptions[activeBuildStage.id] === index
-                const isCorrect = activeBuildStage.answer === index
-                const reveal = selectedBuildOptions[activeBuildStage.id] !== undefined
-                return (
-                  <button
-                    className={`build-option ${selected ? 'selected' : ''} ${reveal && isCorrect ? 'correct' : ''}`}
-                    key={option}
-                    type="button"
-                    onClick={() => answerBuildStage(activeBuildStage, index)}
-                  >
-                    {option}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="architecture-map" aria-label="完成した部品">
-            {BUILD_STAGES.map((stage) => (
-              <div className={builtStages[stage.id] ? 'architecture-node built' : 'architecture-node'} key={stage.id}>
-                <span>{stage.area}</span>
-                <strong>{stage.title}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="feedback-panel compact" role="status" aria-label="ビルドフィードバック">
-          <TerminalSquare size={18} />
-          <p>{buildFeedback}</p>
-        </div>
-      </section>
-
-      <section className="learning-layout">
-        <aside className="quest-map" aria-label="学習マップ">
-          {TRACKS.map((track) => {
-            const TrackIcon = track.icon
-            return (
-              <section className="track-section" key={track.id}>
-                <div className="track-header">
-                  <span className="track-icon" style={{ '--track-color': track.color }}>
-                    <TrackIcon size={18} />
-                  </span>
-                  <div>
-                    <h2>{track.title}</h2>
-                    <p>{track.summary}</p>
-                  </div>
-                </div>
-
-                <div className="lesson-path">
-                  {track.lessons.map((lesson) => {
-                    const isCompleted = Boolean(completedLessons[lesson.id])
-                    const isActive = lesson.id === activeLesson.id
-                    return (
-                      <button
-                        className={`lesson-node ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}
-                        key={lesson.id}
-                        type="button"
-                        onClick={() => selectLesson({ ...lesson, trackId: track.id })}
-                        aria-pressed={isActive}
-                      >
-                        <span>{isCompleted ? <BadgeCheck size={18} /> : <Play size={16} />}</span>
-                        <strong>{lesson.title}</strong>
-                        <small>{lesson.xp} XP</small>
-                      </button>
-                    )
-                  })}
-                </div>
-              </section>
-            )
-          })}
-        </aside>
+      <section className="workspace-grid">
+        <aside className="map-panel">{renderLessonMenu()}</aside>
 
         <section className="lesson-panel" aria-labelledby="lesson-title">
-          <div className="lesson-topline">
+          <div className="panel-title-row">
             <span className="lesson-badge" style={{ '--track-color': activeTrack.color }}>
-              <Sparkles size={16} />
-              {activeTrack.title}
+              <Sparkles size={15} />
+              問題
             </span>
             <span className="lesson-count">
               {activeIndex + 1} / {LESSONS.length}
             </span>
           </div>
 
-          <h2 id="lesson-title">{activeLesson.title}</h2>
-          <p className="concept-copy">{activeLesson.concept}</p>
+          <div className="lesson-intro">
+            <h2 id="lesson-title">{activeLesson.title}</h2>
+            <p className="concept-copy">{activeLesson.concept}</p>
+          </div>
 
           <div className="lab-visual" aria-label="概念の流れ">
             {activeLesson.visual.map((step, index) => (
@@ -845,7 +807,7 @@ function App() {
 
           <div className="quiz-card">
             <div className="quiz-heading">
-              <BrainCircuit size={20} />
+              <BrainCircuit size={18} />
               <h3>{activeLesson.prompt}</h3>
             </div>
 
@@ -872,44 +834,114 @@ function App() {
           </div>
 
           <div className="feedback-panel" role="status" aria-label="レッスンフィードバック">
-            <TerminalSquare size={18} />
+            <TerminalSquare size={17} />
             <p>{feedback}</p>
           </div>
 
           <div className="lesson-actions">
             <button className="primary-button" type="button" onClick={goNext}>
-              次のレッスンへ
+              次の問題へ
             </button>
             <span className={isActiveCompleted ? 'complete-note done' : 'complete-note'}>
               {isActiveCompleted ? <BadgeCheck size={16} /> : <Lock size={16} />}
-              {isActiveCompleted ? 'クリア済み' : '正解するとXP獲得'}
+              {isActiveCompleted ? '保存済みクリア' : '正解すると保存'}
             </span>
+          </div>
+        </section>
+
+        <section className="builder-panel" aria-labelledby="builder-title">
+          <div className="panel-title-row">
+            <span className="lesson-badge build-label">
+              <MonitorCog size={15} />
+              組み立て
+            </span>
+            <span className="lesson-count">
+              {builtCount} / {BUILD_STAGES.length}
+            </span>
+          </div>
+
+          <div className="build-meter" aria-label={`ビルド進捗 ${buildProgress}%`}>
+            <span style={{ width: `${buildProgress}%` }} />
+          </div>
+
+          <div className="build-stage-card">
+            <div className="build-stage-topline">
+              <span>{activeBuildStage.area}</span>
+              <strong>{builtStages[activeBuildStage.id] ? 'Built' : buildReady ? 'Ready' : 'Locked'}</strong>
+            </div>
+            <h3 id="builder-title">{activeBuildStage.title}</h3>
+            <p>{activeBuildStage.prompt}</p>
+
+            <div className="requirement-list">
+              {activeBuildStage.requires.map((lessonId) => {
+                const lesson = LESSONS.find((item) => item.id === lessonId)
+                const done = Boolean(completedLessons[lessonId])
+                return (
+                  <button
+                    className={done ? 'requirement-chip done' : 'requirement-chip'}
+                    key={lessonId}
+                    type="button"
+                    onClick={() => selectLesson(lesson)}
+                  >
+                    {done ? <BadgeCheck size={15} /> : <Lock size={15} />}
+                    {lesson.title}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="build-options">
+            {activeBuildStage.options.map((option, index) => {
+              const selected = selectedBuildOptions[activeBuildStage.id] === index
+              const isCorrect = activeBuildStage.answer === index
+              const reveal = selectedBuildOptions[activeBuildStage.id] !== undefined
+              return (
+                <button
+                  className={`build-option ${selected ? 'selected' : ''} ${reveal && isCorrect ? 'correct' : ''}`}
+                  key={option}
+                  type="button"
+                  onClick={() => answerBuildStage(activeBuildStage, index)}
+                >
+                  {option}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="architecture-map compact-map" aria-label="完成した部品">
+            {BUILD_STAGES.map((stage) => (
+              <div className={builtStages[stage.id] ? 'architecture-node built' : 'architecture-node'} key={stage.id}>
+                <span>{stage.area}</span>
+                <strong>{stage.title}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="feedback-panel compact" role="status" aria-label="ビルドフィードバック">
+            <TerminalSquare size={17} />
+            <p>{buildFeedback}</p>
           </div>
         </section>
       </section>
 
-      <section className="codex-console" aria-label="学べる領域">
-        <div>
-          <Binary size={18} />
-          <span>CPU / syscall / interrupt</span>
+      {isMenuOpen && (
+        <div className="drawer-layer">
+          <button className="drawer-backdrop" type="button" onClick={() => setIsMenuOpen(false)} aria-label="問題メニューを閉じる" />
+          <aside className="drawer-panel" aria-label="問題メニュー">
+            <div className="drawer-top">
+              <div>
+                <p className="eyebrow">Questions</p>
+                <h2>問題メニュー</h2>
+              </div>
+              <button className="icon-button" type="button" onClick={() => setIsMenuOpen(false)} aria-label="閉じる">
+                <X size={19} />
+              </button>
+            </div>
+            {renderLessonMenu('drawer')}
+          </aside>
         </div>
-        <div>
-          <Database size={18} />
-          <span>cache / filesystem / journaling</span>
-        </div>
-        <div>
-          <Layers3 size={18} />
-          <span>DOM / layout / paint / event loop</span>
-        </div>
-        <div>
-          <FileCode2 size={18} />
-          <span>DNS / TLS / HTTP cache / sandbox</span>
-        </div>
-        <div>
-          <MonitorCog size={18} />
-          <span>low-level mental models</span>
-        </div>
-      </section>
+      )}
     </main>
   )
 }
