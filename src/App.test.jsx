@@ -1,41 +1,29 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import App from './App'
 
-describe('OS Boot Clicker', () => {
-  it('unlocks the kernel once enough cycles are collected', () => {
+describe('OS & Browser Academy', () => {
+  it('awards XP when the active lesson is answered correctly', () => {
     render(<App />)
 
-    const generateButton = screen.getByRole('button', { name: /generate cycle/i })
-    const kernelButton = screen.getByRole('button', { name: /load kernel/i })
+    expect(screen.getByRole('heading', { name: /OS & Browser Academy/i })).toBeInTheDocument()
+    expect(screen.getByTestId('total-xp')).toHaveTextContent('0')
 
-    for (let i = 0; i < 10; i += 1) {
-      fireEvent.click(generateButton)
-    }
+    fireEvent.click(screen.getByRole('button', { name: /カーネルをメモリへ読み込み/i }))
 
-    expect(screen.getByTestId('cpu-cycles')).toHaveTextContent('10')
-
-    fireEvent.click(kernelButton)
-
-    expect(screen.getByRole('status')).toHaveTextContent(/kernel online/i)
+    expect(screen.getByTestId('total-xp')).toHaveTextContent('15')
+    expect(screen.getByRole('status')).toHaveTextContent(/ブートローダはカーネルを読み込み/i)
+    expect(screen.getByText('クリア済み')).toBeInTheDocument()
   })
 
-  it('progresses through the boot sequence when each dependency is unlocked', () => {
+  it('lets learners switch lessons and shows a hint after a wrong answer', () => {
     render(<App />)
 
-    const generateButton = screen.getByRole('button', { name: /generate cycle/i })
+    fireEvent.click(screen.getByRole('button', { name: /仮想メモリ/i }))
+    expect(screen.getByRole('heading', { name: '仮想メモリ' })).toBeInTheDocument()
 
-    for (let i = 0; i < 10; i += 1) {
-      fireEvent.click(generateButton)
-    }
+    fireEvent.click(screen.getByRole('button', { name: /ネットワークの遅延をゼロ/i }))
 
-    fireEvent.click(screen.getByRole('button', { name: /load kernel/i }))
-
-    for (let i = 0; i < 25; i += 1) {
-      fireEvent.click(generateButton)
-    }
-
-    fireEvent.click(screen.getByRole('button', { name: /initialize memory/i }))
-
-    expect(screen.getByRole('status')).toHaveTextContent(/memory initialized/i)
+    expect(screen.getByTestId('total-xp')).toHaveTextContent('0')
+    expect(screen.getByRole('status')).toHaveTextContent(/もう一歩/)
   })
 })
