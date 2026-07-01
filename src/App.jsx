@@ -77,6 +77,32 @@ const TRACKS = [
         answer: 0,
         explanation: '権限境界をまたぐ操作なので、カーネルが検査しながら実行します。',
       },
+      {
+        id: 'boot-memory-map',
+        title: 'メモリマップ',
+        xp: 20,
+        concept: 'ブート直後のOSは、使ってよいRAM領域、デバイス予約領域、カーネル配置場所を把握する必要があります。',
+        visual: ['Firmware map', 'Reserved area', 'Free RAM', 'Kernel heap'],
+        prompt: 'メモリマップを読む目的として近いものは？',
+        options: [
+          'OSが安全に使える物理メモリ範囲を知る',
+          'ブラウザの履歴を全部消す',
+          'HTTPレスポンスを暗号化する',
+        ],
+        answer: 0,
+        explanation: '物理メモリのどこを使えるか知らないと、デバイス領域やカーネル自身を上書きしてしまいます。',
+      },
+      {
+        id: 'context-switch',
+        title: 'コンテキストスイッチ',
+        xp: 25,
+        concept: 'OSはレジスタやスタック位置などを保存し、別の処理の状態を復元してCPUを切り替えます。',
+        visual: ['Save registers', 'Pick next', 'Restore state', 'Run task'],
+        prompt: 'コンテキストスイッチで保存・復元される代表例は？',
+        options: ['CPUレジスタや実行位置', 'DNSのTTLだけ', 'CSSの色指定だけ'],
+        answer: 0,
+        explanation: '処理を中断しても戻ってこられるように、CPU上の実行状態を退避します。',
+      },
     ],
   },
   {
@@ -127,6 +153,36 @@ const TRACKS = [
         ],
         answer: 0,
         explanation: 'プリエンプションにより、一つの処理がCPUを独占し続けるのを防げます。',
+      },
+      {
+        id: 'heap-stack',
+        title: 'ヒープとスタック',
+        xp: 20,
+        concept: 'スタックは関数呼び出しの一時領域、ヒープは動的に確保して寿命を管理する領域です。',
+        visual: ['Function call', 'Stack frame', 'malloc/new', 'Heap block'],
+        prompt: 'ヒープが必要になりやすい場面は？',
+        options: [
+          '実行中にサイズや寿命が決まるデータを持つ',
+          'CPUを物理的に冷却する',
+          'HTMLの見出しだけを太くする',
+        ],
+        answer: 0,
+        explanation: 'ヒープは関数をまたいで残したいデータや、実行時に大きさが決まるデータに向きます。',
+      },
+      {
+        id: 'page-fault',
+        title: 'ページフォルト',
+        xp: 25,
+        concept: 'アクセスした仮想ページがまだ物理メモリに対応していないと、CPUは例外を起こしてOSに処理させます。',
+        visual: ['Access page', 'Fault', 'OS handler', 'Map or kill'],
+        prompt: 'ページフォルト時にOSが行う可能性がある処理は？',
+        options: [
+          'ページを割り当てる、ディスクから読む、または不正アクセスとして止める',
+          '必ずネットワークを切断する',
+          'CSSをDOMへ変換する',
+        ],
+        answer: 0,
+        explanation: 'ページフォルトは遅延割り当てやスワップ、保護違反の検出などに使われます。',
       },
     ],
   },
@@ -183,6 +239,36 @@ const TRACKS = [
         answer: 0,
         explanation: '途中で止まった更新を復旧時に判断できるので、構造の破損を抑えられます。',
       },
+      {
+        id: 'vfs',
+        title: 'VFS',
+        xp: 25,
+        concept: 'VFSは異なるファイルシステムを同じopen/read/writeの形で扱うための抽象レイヤーです。',
+        visual: ['open()', 'VFS', 'ext4/tmpfs', 'Driver'],
+        prompt: 'VFSのうれしさは？',
+        options: [
+          '種類の違うファイルシステムを共通APIで扱える',
+          'TLS証明書を発行できる',
+          'JavaScriptを常に高速化する',
+        ],
+        answer: 0,
+        explanation: 'アプリは個別の保存形式を意識せず、カーネルの共通インターフェースを使えます。',
+      },
+      {
+        id: 'block-device',
+        title: 'ブロックデバイス',
+        xp: 20,
+        concept: 'SSDやディスクはバイト列ではなく、固定サイズのブロック単位で読み書きされることが多いです。',
+        visual: ['Request', 'Block layer', 'Driver queue', 'SSD'],
+        prompt: 'ブロック層が吸収したい違いは？',
+        options: [
+          'デバイスごとの読み書き単位やキュー処理の違い',
+          'HTMLタグ名の大文字小文字',
+          'ユーザーの画面サイズだけ',
+        ],
+        answer: 0,
+        explanation: 'ファイルシステムはブロック層を通じて、個別デバイスの細部から少し離れて扱えます。',
+      },
     ],
   },
   {
@@ -234,6 +320,36 @@ const TRACKS = [
         answer: 0,
         explanation: 'キャッシュ可能なCSSや画像を再利用すると、通信量と待ち時間を減らせます。',
       },
+      {
+        id: 'socket',
+        title: 'ソケット',
+        xp: 25,
+        concept: 'アプリはソケットを通じて、TCPやUDPの通信端点をファイルのようなAPIで扱います。',
+        visual: ['socket()', 'connect()', 'send/recv', 'close()'],
+        prompt: 'ソケットが表すものに近いのは？',
+        options: [
+          'ネットワーク通信の端点',
+          'DOMノードの親要素',
+          '物理メモリの空きページだけ',
+        ],
+        answer: 0,
+        explanation: 'ソケットはIPアドレス、ポート、プロトコルと結びついた通信口として扱えます。',
+      },
+      {
+        id: 'congestion',
+        title: '輻輳制御',
+        xp: 30,
+        concept: 'TCPはネットワークを詰まらせないよう、送信量を増減させながら帯域を探ります。',
+        visual: ['Send window', 'ACK', 'Loss signal', 'Slow down'],
+        prompt: '輻輳制御の目的は？',
+        options: [
+          'ネットワーク全体が混雑しすぎないよう送信量を調整する',
+          'OSの特権命令を増やす',
+          'CSSセレクタを短くする',
+        ],
+        answer: 0,
+        explanation: '損失や遅延を手がかりに送信ペースを調整し、通信の安定性を保ちます。',
+      },
     ],
   },
   {
@@ -284,6 +400,36 @@ const TRACKS = [
         options: ['マイクロタスクキュー', 'ディスクのジャーナル', 'BIOS設定画面'],
         answer: 0,
         explanation: 'Promise反応はマイクロタスクとして扱われ、現在のタスク後に優先して消化されます。',
+      },
+      {
+        id: 'js-engine',
+        title: 'JavaScriptエンジン',
+        xp: 25,
+        concept: 'JSエンジンはソースを解析し、バイトコードやJIT最適化を使って実行します。',
+        visual: ['Parse', 'Bytecode', 'JIT', 'Execute'],
+        prompt: 'JIT最適化が狙うものは？',
+        options: [
+          'よく通るコードを実行時情報で速くする',
+          'DNSを必ず暗号化する',
+          'ファイルシステムを読み取り専用にする',
+        ],
+        answer: 0,
+        explanation: '実行時の型や分岐の傾向を利用して、ホットなコードを機械語へ最適化します。',
+      },
+      {
+        id: 'gpu-composite',
+        title: 'GPU合成',
+        xp: 25,
+        concept: 'ブラウザは一部のレイヤーをGPUで合成し、スクロールやアニメーションを滑らかにします。',
+        visual: ['Layer tree', 'Raster', 'GPU texture', 'Composite'],
+        prompt: '合成だけで済む更新が軽い理由は？',
+        options: [
+          'レイアウトやペイントをやり直さず、既存レイヤーを組み合わせられる',
+          'HTTP通信が不要になるから',
+          'カーネルモードへ入らないから',
+        ],
+        answer: 0,
+        explanation: 'transformやopacity中心の更新は、再レイアウトを避けて合成で処理しやすいです。',
       },
     ],
   },
@@ -340,22 +486,129 @@ const TRACKS = [
         answer: 0,
         explanation: 'ログイン済みサイトの情報を、別の悪意あるページが読み取るのを防ぎます。',
       },
+      {
+        id: 'capability',
+        title: 'Capability',
+        xp: 25,
+        concept: '権限を広く渡すのではなく、必要な操作だけを表す能力として渡すと被害範囲を小さくできます。',
+        visual: ['Request', 'Grant token', 'Limited action', 'Audit'],
+        prompt: 'Capability設計で重視する考え方は？',
+        options: [
+          '必要最小限の操作権限だけを渡す',
+          'すべての処理をrootで動かす',
+          'ブラウザキャッシュを常に無効にする',
+        ],
+        answer: 0,
+        explanation: '小さな権限を渡すほど、漏れたり悪用されたりしたときの被害を狭くできます。',
+      },
+      {
+        id: 'site-isolation',
+        title: 'Site Isolation',
+        xp: 30,
+        concept: 'ブラウザはサイトごとにプロセスを分け、脆弱性があっても別サイトの情報へ届きにくくします。',
+        visual: ['Site A', 'Process A', 'Site B', 'Process B'],
+        prompt: 'Site Isolationが強めるものは？',
+        options: [
+          'サイト間のプロセス分離',
+          'ディスクの書き込み速度だけ',
+          'HTMLのインデント',
+        ],
+        answer: 0,
+        explanation: '同一オリジンポリシーのような論理的制限に加え、プロセス境界でも守ります。',
+      },
     ],
   },
 ]
 
 const LESSONS = TRACKS.flatMap((track) => track.lessons.map((lesson) => ({ ...lesson, trackId: track.id })))
 
+const BUILD_STAGES = [
+  {
+    id: 'bootable-kernel',
+    title: '最小カーネルを起動する',
+    area: 'OS',
+    requires: ['bios-bootloader', 'boot-memory-map', 'syscall'],
+    prompt: '最初に作るべき最小構成は？',
+    options: ['ブートローダ、メモリマップ読み取り、最小syscall', 'CSSテーマだけ', 'SNSログインだけ'],
+    answer: 0,
+    result: '起動できる核ができました。次は割り込みとタスク切り替えでOSらしくします。',
+  },
+  {
+    id: 'multitask-core',
+    title: 'タスクを切り替える',
+    area: 'OS',
+    requires: ['interrupts', 'context-switch', 'scheduler'],
+    prompt: '複数タスクを動かすための中心部品は？',
+    options: ['タイマー割り込み、コンテキスト保存、スケジューラ', 'HTMLパーサだけ', '画像圧縮だけ'],
+    answer: 0,
+    result: 'CPU時間を配れるようになりました。OSが一つの処理に固まりにくくなります。',
+  },
+  {
+    id: 'memory-manager',
+    title: 'メモリ管理を作る',
+    area: 'OS',
+    requires: ['virtual-memory', 'heap-stack', 'page-fault'],
+    prompt: 'メモリ管理のデモで扱うべき流れは？',
+    options: ['仮想アドレス、ヒープ確保、ページフォルト処理', 'DNS問い合わせだけ', 'CSSのhoverだけ'],
+    answer: 0,
+    result: 'プロセスを隔離しながらメモリを渡せる土台ができました。',
+  },
+  {
+    id: 'storage-stack',
+    title: 'ファイルを読めるようにする',
+    area: 'OS',
+    requires: ['filesystem', 'vfs', 'block-device', 'cache'],
+    prompt: 'read("/hello.txt")を通す順番に近いものは？',
+    options: ['VFS、ファイルシステム、ページキャッシュ、ブロック層', 'GPU、TLS、DOM、Cookie', 'JIT、CSSOM、DNS、ACK'],
+    answer: 0,
+    result: 'パスからディスクブロックまでたどる道ができました。',
+  },
+  {
+    id: 'network-browser',
+    title: 'URLからHTMLを取る',
+    area: 'Browser',
+    requires: ['dns', 'socket', 'tcp-tls', 'http-cache'],
+    prompt: 'https://example.com を開く最初の流れは？',
+    options: ['DNS、TCP/TLS、HTTP、キャッシュ判断', 'ページフォルト、JIT、VFS、Paint', 'UEFI、inode、GPU、Stack'],
+    answer: 0,
+    result: 'ブラウザがネットワーク越しに文書を取りに行けるようになりました。',
+  },
+  {
+    id: 'render-engine',
+    title: 'HTMLを画面にする',
+    area: 'Browser',
+    requires: ['parser', 'rendering', 'js-engine', 'gpu-composite'],
+    prompt: '画面表示の大きな流れとして近いものは？',
+    options: ['Parse、DOM/CSSOM、Layout/Paint、Composite', 'syscall、inode、ACK、Trap', 'UEFI、Scheduler、TLS、VFS'],
+    answer: 0,
+    result: 'HTML/CSS/JSからピクセルまでの簡易レンダラが完成しました。',
+  },
+  {
+    id: 'sandboxed-web',
+    title: '安全にWebを動かす',
+    area: 'Browser',
+    requires: ['permission', 'browser-sandbox', 'same-origin', 'site-isolation'],
+    prompt: '危険なページの被害を抑える設計は？',
+    options: ['権限分離、サンドボックス、同一オリジン、サイト分離', '全ページをrootで実行', 'キャッシュを永久保存'],
+    answer: 0,
+    result: 'ブラウザらしい防御層が入り、学習版アーキテクチャが一周しました。',
+  },
+]
+
 function App() {
   const [activeLessonId, setActiveLessonId] = useState(LESSONS[0].id)
   const [completedLessons, setCompletedLessons] = useState({})
+  const [builtStages, setBuiltStages] = useState({})
   const [selectedOption, setSelectedOption] = useState(null)
+  const [selectedBuildOptions, setSelectedBuildOptions] = useState({})
   const [feedback, setFeedback] = useState('まずは最初のノードを開いて、低レイヤー探検を始めよう。')
+  const [buildFeedback, setBuildFeedback] = useState('レッスンをクリアすると、対応するOS/ブラウザ部品を組み立てられるようになります。')
   const [streak, setStreak] = useState(0)
 
   const activeLesson = LESSONS.find((lesson) => lesson.id === activeLessonId) ?? LESSONS[0]
   const activeTrack = TRACKS.find((track) => track.id === activeLesson.trackId)
   const completedCount = Object.keys(completedLessons).length
+  const builtCount = Object.keys(builtStages).length
   const totalXp = useMemo(() => {
     return LESSONS.reduce((sum, lesson) => {
       return completedLessons[lesson.id] ? sum + lesson.xp : sum
@@ -364,6 +617,9 @@ function App() {
   const progress = Math.round((completedCount / LESSONS.length) * 100)
   const activeIndex = LESSONS.findIndex((lesson) => lesson.id === activeLesson.id)
   const isActiveCompleted = Boolean(completedLessons[activeLesson.id])
+  const activeBuildStage = BUILD_STAGES.find((stage) => !builtStages[stage.id]) ?? BUILD_STAGES[BUILD_STAGES.length - 1]
+  const buildReady = activeBuildStage.requires.every((lessonId) => completedLessons[lessonId])
+  const buildProgress = Math.round((builtCount / BUILD_STAGES.length) * 100)
 
   const selectLesson = (lesson) => {
     setActiveLessonId(lesson.id)
@@ -388,6 +644,23 @@ function App() {
   const goNext = () => {
     const nextLesson = LESSONS[activeIndex + 1] ?? LESSONS[0]
     selectLesson(nextLesson)
+  }
+
+  const answerBuildStage = (stage, optionIndex) => {
+    setSelectedBuildOptions((prev) => ({ ...prev, [stage.id]: optionIndex }))
+
+    if (!stage.requires.every((lessonId) => completedLessons[lessonId])) {
+      setBuildFeedback('まだ材料知識が足りません。左のマップで必要レッスンを先にクリアしよう。')
+      return
+    }
+
+    if (optionIndex !== stage.answer) {
+      setBuildFeedback('惜しいです。実装工程では、依存する部品の順番を意識すると見えてきます。')
+      return
+    }
+
+    setBuiltStages((prev) => ({ ...prev, [stage.id]: true }))
+    setBuildFeedback(stage.result)
   }
 
   return (
@@ -419,10 +692,91 @@ function App() {
               {completedCount}/{LESSONS.length}
             </strong>
           </div>
+          <div>
+            <MonitorCog size={20} />
+            <span>Build</span>
+            <strong>
+              {builtCount}/{BUILD_STAGES.length}
+            </strong>
+          </div>
         </div>
 
         <div className="progress-shell" aria-label={`全体進捗 ${progress}%`}>
           <span style={{ width: `${progress}%` }} />
+        </div>
+      </section>
+
+      <section className="builder-panel" aria-labelledby="builder-title">
+        <div className="builder-copy">
+          <p className="eyebrow">Build mode</p>
+          <h2 id="builder-title">ミニOS/ブラウザを組み立てる</h2>
+          <p>
+            クイズで得た知識を材料にして、実装の順番を選びます。正しい部品を選ぶと、学習用アーキテクチャが少しずつ完成します。
+          </p>
+        </div>
+
+        <div className="build-meter" aria-label={`ビルド進捗 ${buildProgress}%`}>
+          <span style={{ width: `${buildProgress}%` }} />
+        </div>
+
+        <div className="build-board">
+          <div className="build-stage-card">
+            <div className="build-stage-topline">
+              <span>{activeBuildStage.area}</span>
+              <strong>{builtStages[activeBuildStage.id] ? 'Built' : buildReady ? 'Ready' : 'Locked'}</strong>
+            </div>
+            <h3>{activeBuildStage.title}</h3>
+            <p>{activeBuildStage.prompt}</p>
+            <div className="requirement-list">
+              {activeBuildStage.requires.map((lessonId) => {
+                const lesson = LESSONS.find((item) => item.id === lessonId)
+                const done = Boolean(completedLessons[lessonId])
+                return (
+                  <button
+                    className={done ? 'requirement-chip done' : 'requirement-chip'}
+                    key={lessonId}
+                    type="button"
+                    onClick={() => selectLesson(lesson)}
+                  >
+                    {done ? <BadgeCheck size={15} /> : <Lock size={15} />}
+                    {lesson.title}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="build-options">
+              {activeBuildStage.options.map((option, index) => {
+                const selected = selectedBuildOptions[activeBuildStage.id] === index
+                const isCorrect = activeBuildStage.answer === index
+                const reveal = selectedBuildOptions[activeBuildStage.id] !== undefined
+                return (
+                  <button
+                    className={`build-option ${selected ? 'selected' : ''} ${reveal && isCorrect ? 'correct' : ''}`}
+                    key={option}
+                    type="button"
+                    onClick={() => answerBuildStage(activeBuildStage, index)}
+                  >
+                    {option}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="architecture-map" aria-label="完成した部品">
+            {BUILD_STAGES.map((stage) => (
+              <div className={builtStages[stage.id] ? 'architecture-node built' : 'architecture-node'} key={stage.id}>
+                <span>{stage.area}</span>
+                <strong>{stage.title}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="feedback-panel compact" role="status" aria-label="ビルドフィードバック">
+          <TerminalSquare size={18} />
+          <p>{buildFeedback}</p>
         </div>
       </section>
 
@@ -517,7 +871,7 @@ function App() {
             </div>
           </div>
 
-          <div className="feedback-panel" role="status">
+          <div className="feedback-panel" role="status" aria-label="レッスンフィードバック">
             <TerminalSquare size={18} />
             <p>{feedback}</p>
           </div>
